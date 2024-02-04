@@ -31,7 +31,7 @@ python gitemails.py --user <username> --token-file <path_to_tokens_file>
 
 ## Output
 
-The script generates a CSV file named github-data-<target>.csv with the following columns:
+The script generates a CSV file named github-data-[target].csv with the following columns:
 
     Repo Name
     Repo URL
