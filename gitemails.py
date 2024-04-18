@@ -2,6 +2,12 @@ import requests
 import time
 import csv
 import argparse
+from datetime import datetime
+import warnings
+
+# Suppress the insecure request warnings (requests verify=False)
+# Used for testing self hosted git labs that could be self signed
+warnings.filterwarnings('ignore', category=requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
 def token_generator(token_list):
     while True:
@@ -19,19 +25,29 @@ def get_api_response(url, token_gen=None):
             token = next(token_gen)  # Get the next token
             headers['Authorization'] = f'token {token}'
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=False)
 
         if response.status_code == 200:
             return response
-        elif response.status_code == 403 and 'X-RateLimit-Remaining' in response.headers and response.headers['X-RateLimit-Remaining'] == '0':
+        elif response.status_code == 403 and 'X-RateLimit-Reset' in response.headers and response.headers['X-RateLimit-Remaining'] == '0':
+            print("\nRate limit exceeded and no additional tokens available.")
+            retry_after = datetime.utcfromtimestamp(int(response.headers.get('X-Ratelimit-Reset')))
+            print(f'Github - Retry after time {str(retry_after)}')
+            current_time = datetime.now()
+            print(f'Current time {str(current_time)}')
+            wait_seconds = (retry_after - current_time).total_seconds() + 10
+            print(f'Wait seconds {str(int(wait_seconds))}')
+
             if token_gen:
-                retry_after = int(response.headers.get('Retry-After', 60))
-                print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Rate limit exceeded. Switching token and retrying after {retry_after} seconds.")
-                time.sleep(retry_after)
+                print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Rate limit exceeded. Switching token and retrying after 60 seconds.")
+                # time.sleep(wait_seconds)
+                time.sleep(60)
                 continue
             else:
-                print("Rate limit exceeded and no additional tokens available.")
-                break
+                print("\nIt is highly reccomended to use github tokens if you are checking big orgs or projects with many commits")
+                print("     Tokens can be generated at https://github.com/settings/tokens\n")
+                time.sleep(wait_seconds)
+                continue
         else:
             response.raise_for_status()
 
