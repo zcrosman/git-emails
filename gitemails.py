@@ -30,23 +30,24 @@ def get_api_response(url, token_gen=None):
         if response.status_code == 200:
             return response
         elif response.status_code == 403 and 'X-RateLimit-Reset' in response.headers and response.headers['X-RateLimit-Remaining'] == '0':
-            print("\nRate limit exceeded and no additional tokens available.")
-            retry_after = datetime.utcfromtimestamp(int(response.headers.get('X-Ratelimit-Reset')))
-            print(f'Github - Retry after time {str(retry_after)}')
-            current_time = datetime.now()
-            print(f'Current time {str(current_time)}')
-            wait_seconds = (retry_after - current_time).total_seconds() + 10
-            print(f'Wait seconds {str(int(wait_seconds))}')
+            print("\nRate limit exceeded!!!")
+            # retry_after = datetime.utcfromtimestamp(int(response.headers.get('X-Ratelimit-Reset')))
+            # print(f'Github - Retry after time {str(retry_after)}')
+            # current_time = datetime.now()
+            # print(f'Current time {str(current_time)}')
+            # wait_seconds = (retry_after - current_time).total_seconds() + 10
+            # print(f'Wait seconds {str(int(wait_seconds))}')
 
             if token_gen:
                 print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Rate limit exceeded. Switching token and retrying after 60 seconds.")
-                # time.sleep(wait_seconds)
+                print("\nRetrying in 60 seconds.")
                 time.sleep(60)
                 continue
             else:
-                print("\nIt is highly reccomended to use github tokens if you are checking big orgs or projects with many commits")
+                print("\nIt is highly reccomended to use github tokens if you are scanning large targets")
                 print("     Tokens can be generated at https://github.com/settings/tokens\n")
-                time.sleep(wait_seconds)
+                print("\nRetrying in 60 seconds.")
+                time.sleep(60)
                 continue
         else:
             response.raise_for_status()
