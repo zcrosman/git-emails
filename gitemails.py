@@ -29,6 +29,9 @@ def get_api_response(url, token_gen=None):
 
         if response.status_code == 200:
             return response
+        elif response.status_code == 409:
+            print(f"Skipping repo (empty repo) - {url}")
+            return None
         elif response.status_code == 403 and 'X-RateLimit-Reset' in response.headers and response.headers['X-RateLimit-Remaining'] == '0':
             print("\nRate limit exceeded!!!")
             if token_gen:
@@ -103,6 +106,9 @@ def get_emails_from_github_commits(repo, csv_writer, token_gen=None):
     while url:
         print(f'Searching Project Commits ({repo["name"]}): {url}')
         response = get_api_response(url, token_gen)
+        if not response:
+            break
+
         commits = response.json()
 
         for commit in commits:
